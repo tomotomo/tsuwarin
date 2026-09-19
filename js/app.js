@@ -1,0 +1,332 @@
+/**
+ * app.js - メインコントローラー & UIバインディング
+ */
+
+import { calcDayZeroMidnight, calcProgress } from './calculator.js';
+import { loadSettings, saveSettings, updateLastAccess, getElapsedEndurance, clearSettings } from './storage.js';
+
+// 夫から奥様への温かい寄り添いメッセージ（日替わり）
+const ENCOURAGEMENT_MESSAGES = [
+  '今日も1日耐えてえらい！本当によく頑張っているよ。',
+  '赤ちゃんもママと一緒に、一歩ずつ大きくなっているよ🌱',
+  '無理せず横になって、ゆっくり休んでね。',
+  '食べられる時に、食べられるものだけで大丈夫だよ。',
+  '1分1秒、確実にゴールに近づいているよ。',
+  'いつでも頼ってね。一緒に乗り越えようね。',
+  '身体が一生懸命に赤ちゃんを守っている証拠だよ。',
+  '今日を乗り切った分、また一歩前進したね✨',
+  '深呼吸して、自分をたくさん褒めてあげてね。'
+];
+
+// DOM要素の参照
+const stateWelcome = document.getElementById('state-welcome');
+const stateCountdown = document.getElementById('state-countdown');
+const stateMaturity = document.getElementById('state-maturity');
+
+// オンボーディングフォーム
+const formOnboarding = document.getElementById('form-onboarding');
+const selectOnboardingWeeks = document.getElementById('onboarding-weeks');
+const selectOnboardingDays = document.getElementById('onboarding-days');
+
+// 設定モーダル
+const modalSettings = document.getElementById('modal-settings');
+const btnOpenSettings = document.getElementById('btn-open-settings');
+const btnCloseSettings = document.getElementById('btn-close-settings');
+const formSettings = document.getElementById('form-settings');
+const selectSettingsWeeks = document.getElementById('settings-weeks');
+const selectSettingsDays = document.getElementById('settings-days');
+const btnResetData = document.getElementById('btn-reset-data');
+const btnMaturityReconfigure = document.getElementById('btn-maturity-reconfigure');
+
+// カウントダウン画面要素
+const targetSwitcher = document.getElementById('target-switcher');
+const tabTarget12 = document.getElementById('tab-target-12');
+const tabTarget15 = document.getElementById('tab-target-15');
+const badgeCurrentWeek = document.getElementById('badge-current-week');
+const badgeEndurance = document.getElementById('badge-endurance');
+const heroCountdownArea = document.getElementById('hero-countdown-area');
+const displayHours = document.getElementById('display-hours');
+const displayDays = document.getElementById('display-days');
+const statementPlate = document.getElementById('statement-plate');
+const celebrationArea = document.getElementById('celebration-area');
+const celebrationMessage = document.getElementById('celebration-message');
+const btnSwitchTo15 = document.getElementById('btn-switch-to-15');
+const progressPercent = document.getElementById('progress-percent');
+const progressFill = document.getElementById('progress-fill');
+const progressTargetLabel = document.getElementById('progress-target-label');
+const encouragementMessage = document.getElementById('encouragement-message');
+const maturityWeeksDisplay = document.getElementById('maturity-weeks-display');
+
+// アプリケーション状態
+let currentSettings = null;
+let dayZeroMidnight = null;
+let timerId = null;
+let enduranceBadgeChecked = false;
+
+/**
+ * 今日のカレンダー日付を YYYY-MM-DD 形式で取得する
+ * @returns {string}
+ */
+function getTodayDateStr() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 0〜40週の選択肢をセレクトボックスに注入する
+ * @param {HTMLSelectElement} selectEl
+ * @param {number} defaultVal
+ */
+function populateWeeksSelect(selectEl, defaultVal = 9) {
+  selectEl.innerHTML = '';
+  for (let w = 0; w <= 40; w++) {
+    const opt = document.createElement('option');
+    opt.value = w;
+    opt.textContent = `${w}週`;
+    if (w === defaultVal) opt.selected = true;
+    selectEl.appendChild(opt);
+  }
+}
+
+const appHeader = document.querySelector('.app-header');
+
+/**
+ * 画面ステート（welcome / countdown / maturity）を切り替える
+ * @param {'welcome'|'countdown'|'maturity'} stateName
+ */
+function showState(stateName) {
+  stateWelcome.classList.toggle('hidden', stateName !== 'welcome');
+  stateCountdown.classList.toggle('hidden', stateName !== 'countdown');
+  stateMaturity.classList.toggle('hidden', stateName !== 'maturity');
+
+  // オンボーディング中はヘッダー全体を非表示にして中央に綺麗に収める
+  if (appHeader) {
+    appHeader.classList.toggle('hidden', stateName === 'welcome');
+  }
+}
+
+/**
+ * UIの描画と最新の計算結果の反映
+ */
+function render() {
+  if (!currentSettings) {
+    showState('welcome');
+    return;
+  }
+
+  // 起点日（0週0日 0:00）の計算
+  if (!dayZeroMidnight) {
+    dayZeroMidnight = calcDayZeroMidnight(
+      currentSettings.baseDateStr,
+      currentSettings.baseWeeks,
+      currentSettings.baseDays
+    );
+  }
+
+  const now = new Date();
+  const result = calcProgress(dayZeroMidnight, now, currentSettings.targetWeeks);
+
+  // 15週を超過している場合（ステート3）
+  if (result.isPost15Weeks) {
+    showState('maturity');
+    maturityWeeksDisplay.textContent = `現在 ${result.currentWeeks}週${result.currentDays}日`;
+    return;
+  }
+
+  // 通常カウントダウン画面（ステート2）
+  showState('countdown');
+
+  // タブの同期
+  targetSwitcher.setAttribute('data-target', String(result.targetWeeks));
+  tabTarget12.classList.toggle('active', result.targetWeeks === 12);
+  tabTarget15.classList.toggle('active', result.targetWeeks === 15);
+
+  // 現在週数バッジ
+  badgeCurrentWeek.textContent = `🌱 現在 ${result.currentWeeks}週${result.currentDays}日`;
+
+  // 耐えた時間バッジの表示チェック（セッション初回時）
+  if (!enduranceBadgeChecked) {
+    enduranceBadgeChecked = true;
+    const endurance = getElapsedEndurance(currentSettings.lastAccessTimestamp);
+    if (endurance && endurance.text) {
+      badgeEndurance.textContent = endurance.text;
+      badgeEndurance.classList.remove('hidden');
+      // 6秒後に静かにオパシティを落ち着かせる
+      setTimeout(() => {
+        badgeEndurance.style.opacity = '0.75';
+      }, 6000);
+    } else {
+      badgeEndurance.classList.add('hidden');
+    }
+  }
+
+  // 目標達成判定
+  if (result.isTargetReached) {
+    heroCountdownArea.classList.add('hidden');
+    celebrationArea.classList.remove('hidden');
+
+    if (result.targetWeeks === 12) {
+      celebrationMessage.textContent = '12週目を迎えました！本当にお疲れ様でした💐体調はいかがですか？';
+      btnSwitchTo15.classList.remove('hidden');
+    } else {
+      celebrationMessage.textContent = '15週目を迎えました！本当にお疲れ様でした💐体調はいかがですか？';
+      btnSwitchTo15.classList.add('hidden');
+    }
+
+    statementPlate.textContent = `${result.currentWeeks}週${result.currentDays}日 ${result.targetWeeks}週目を迎えました！💐`;
+  } else {
+    heroCountdownArea.classList.remove('hidden');
+    celebrationArea.classList.add('hidden');
+
+    displayHours.textContent = result.remainingHours.toLocaleString('ja-JP');
+    displayDays.textContent = `(約 ${result.remainingDays}日)`;
+    statementPlate.textContent = result.formattedText;
+  }
+
+  // プログレスバーの更新
+  progressPercent.textContent = `${result.progressPercent}%`;
+  progressFill.style.width = `${result.progressPercent}%`;
+  progressTargetLabel.textContent = `目標 ${result.targetWeeks}週`;
+
+  // 励ましメッセージ（日付に応じた日替わり）
+  const dayIndex = now.getDate() % ENCOURAGEMENT_MESSAGES.length;
+  encouragementMessage.textContent = ENCOURAGEMENT_MESSAGES[dayIndex];
+}
+
+/**
+ * アプリケーションの初期化
+ */
+function init() {
+  // セレクトボックスの選択肢初期化
+  populateWeeksSelect(selectOnboardingWeeks, 9);
+  populateWeeksSelect(selectSettingsWeeks, 9);
+
+  // LocalStorageから設定読み出し
+  currentSettings = loadSettings();
+
+  if (currentSettings) {
+    render();
+    // 最終アクセス時刻を更新
+    updateLastAccess();
+  } else {
+    showState('welcome');
+  }
+
+  // 定期タイマー（毎分更新）
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(() => {
+    render();
+    updateLastAccess();
+  }, 60000);
+
+  // バックグラウンド復帰時の時間同期
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      render();
+      updateLastAccess();
+    }
+  });
+
+  setupEventListeners();
+}
+
+/**
+ * イベントリスナーの設定
+ */
+function setupEventListeners() {
+  // オンボーディングフォーム送信
+  formOnboarding.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const weeks = parseInt(selectOnboardingWeeks.value, 10);
+    const days = parseInt(selectOnboardingDays.value, 10);
+    const targetEl = formOnboarding.querySelector('input[name="targetChoice"]:checked');
+    const targetWeeks = targetEl ? parseInt(targetEl.value, 10) : 12;
+
+    currentSettings = saveSettings({
+      baseDateStr: getTodayDateStr(),
+      baseWeeks: weeks,
+      baseDays: days,
+      targetWeeks: targetWeeks,
+      lastAccessTimestamp: Date.now()
+    });
+
+    dayZeroMidnight = null;
+    enduranceBadgeChecked = false;
+    render();
+  });
+
+  // 目標切り替えタブ (12週 / 15週)
+  tabTarget12.addEventListener('click', () => switchTarget(12));
+  tabTarget15.addEventListener('click', () => switchTarget(15));
+
+  function switchTarget(target) {
+    if (!currentSettings || currentSettings.targetWeeks === target) return;
+    currentSettings.targetWeeks = target;
+    saveSettings(currentSettings);
+    render();
+  }
+
+  // 12週達成時の15週切り替えボタン
+  btnSwitchTo15.addEventListener('click', () => switchTarget(15));
+
+  // 設定モーダル開閉
+  btnOpenSettings.addEventListener('click', openSettingsModal);
+  btnMaturityReconfigure.addEventListener('click', openSettingsModal);
+  btnCloseSettings.addEventListener('click', closeSettingsModal);
+
+  modalSettings.addEventListener('click', (e) => {
+    if (e.target === modalSettings) closeSettingsModal();
+  });
+
+  function openSettingsModal() {
+    if (currentSettings) {
+      selectSettingsWeeks.value = String(currentSettings.baseWeeks);
+      selectSettingsDays.value = String(currentSettings.baseDays);
+      const radio = formSettings.querySelector(`input[name="settingsTarget"][value="${currentSettings.targetWeeks}"]`);
+      if (radio) radio.checked = true;
+    }
+    modalSettings.classList.add('open');
+  }
+
+  function closeSettingsModal() {
+    modalSettings.classList.remove('open');
+  }
+
+  // 設定変更フォーム送信
+  formSettings.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const weeks = parseInt(selectSettingsWeeks.value, 10);
+    const days = parseInt(selectSettingsDays.value, 10);
+    const targetEl = formSettings.querySelector('input[name="settingsTarget"]:checked');
+    const targetWeeks = targetEl ? parseInt(targetEl.value, 10) : 12;
+
+    currentSettings = saveSettings({
+      baseDateStr: getTodayDateStr(),
+      baseWeeks: weeks,
+      baseDays: days,
+      targetWeeks: targetWeeks,
+      lastAccessTimestamp: currentSettings ? currentSettings.lastAccessTimestamp : Date.now()
+    });
+
+    dayZeroMidnight = null;
+    closeSettingsModal();
+    render();
+  });
+
+  // リセットボタン
+  btnResetData.addEventListener('click', () => {
+    if (confirm('設定をリセットして初期画面に戻しますか？')) {
+      clearSettings();
+      currentSettings = null;
+      dayZeroMidnight = null;
+      closeSettingsModal();
+      showState('welcome');
+    }
+  });
+}
+
+// アプリケーション起動
+window.addEventListener('DOMContentLoaded', init);

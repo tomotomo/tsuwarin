@@ -1,5 +1,6 @@
 /**
  * app.js - メインコントローラー & UIバインディング
+ * DESIGN.md（ベッドサイド・サンクチュアリ）完全準拠
  */
 
 import { calcDayZeroMidnight, calcProgress } from './calculator.js';
@@ -23,6 +24,13 @@ const stateWelcome = document.getElementById('state-welcome');
 const stateCountdown = document.getElementById('state-countdown');
 const stateMaturity = document.getElementById('state-maturity');
 
+// ヘッダー・明るさ切り替え・設定
+const btnThemeToggle = document.getElementById('btn-theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+const themeText = document.getElementById('theme-text');
+const btnOpenSettings = document.getElementById('btn-open-settings');
+const metaThemeColor = document.getElementById('meta-theme-color');
+
 // オンボーディングフォーム
 const formOnboarding = document.getElementById('form-onboarding');
 const selectOnboardingWeeks = document.getElementById('onboarding-weeks');
@@ -30,7 +38,6 @@ const selectOnboardingDays = document.getElementById('onboarding-days');
 
 // 設定モーダル
 const modalSettings = document.getElementById('modal-settings');
-const btnOpenSettings = document.getElementById('btn-open-settings');
 const btnCloseSettings = document.getElementById('btn-close-settings');
 const formSettings = document.getElementById('form-settings');
 const selectSettingsWeeks = document.getElementById('settings-weeks');
@@ -38,22 +45,15 @@ const selectSettingsDays = document.getElementById('settings-days');
 const btnResetData = document.getElementById('btn-reset-data');
 const btnMaturityReconfigure = document.getElementById('btn-maturity-reconfigure');
 
-// カウントダウン画面要素
-const targetSwitcher = document.getElementById('target-switcher');
-const tabTarget12 = document.getElementById('tab-target-12');
-const tabTarget15 = document.getElementById('tab-target-15');
-const badgeCurrentWeek = document.getElementById('badge-current-week');
+// カウントダウン画面要素（全画面キャンバス）
+const displayCurrentWeeks = document.getElementById('display-current-weeks');
 const badgeEndurance = document.getElementById('badge-endurance');
-const heroCountdownArea = document.getElementById('hero-countdown-area');
+const countdownTargetLabel = document.getElementById('countdown-target-label');
 const displayHours = document.getElementById('display-hours');
 const displayDays = document.getElementById('display-days');
-const statementPlate = document.getElementById('statement-plate');
 const celebrationArea = document.getElementById('celebration-area');
 const celebrationMessage = document.getElementById('celebration-message');
 const btnSwitchTo15 = document.getElementById('btn-switch-to-15');
-const progressPercent = document.getElementById('progress-percent');
-const progressFill = document.getElementById('progress-fill');
-const progressTargetLabel = document.getElementById('progress-target-label');
 const encouragementMessage = document.getElementById('encouragement-message');
 const maturityWeeksDisplay = document.getElementById('maturity-weeks-display');
 
@@ -62,6 +62,44 @@ let currentSettings = null;
 let dayZeroMidnight = null;
 let timerId = null;
 let enduranceBadgeChecked = false;
+
+/**
+ * テーマ管理（Day ☀️ / Night 🌙）
+ */
+const THEME_STORAGE_KEY = 'tsuwarin_theme';
+
+function initTheme() {
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  if (savedTheme === 'dark' || savedTheme === 'light') {
+    applyTheme(savedTheme);
+  } else {
+    // OS設定を参照
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark ? 'dark' : 'light');
+  }
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+
+  if (theme === 'dark') {
+    themeIcon.textContent = '☀️';
+    themeText.textContent = '昼';
+    btnThemeToggle.setAttribute('aria-label', '昼モードに切り替える');
+    if (metaThemeColor) metaThemeColor.setAttribute('content', '#16181D');
+  } else {
+    themeIcon.textContent = '🌙';
+    themeText.textContent = '夜';
+    btnThemeToggle.setAttribute('aria-label', '夜モード（暗い画面）に切り替える');
+    if (metaThemeColor) metaThemeColor.setAttribute('content', '#FAF7F2');
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
 
 /**
  * 今日のカレンダー日付を YYYY-MM-DD 形式で取得する
@@ -91,8 +129,6 @@ function populateWeeksSelect(selectEl, defaultVal = 9) {
   }
 }
 
-const appHeader = document.querySelector('.app-header');
-
 /**
  * 画面ステート（welcome / countdown / maturity）を切り替える
  * @param {'welcome'|'countdown'|'maturity'} stateName
@@ -102,9 +138,9 @@ function showState(stateName) {
   stateCountdown.classList.toggle('hidden', stateName !== 'countdown');
   stateMaturity.classList.toggle('hidden', stateName !== 'maturity');
 
-  // オンボーディング中はヘッダー全体を非表示にして中央に綺麗に収める
-  if (appHeader) {
-    appHeader.classList.toggle('hidden', stateName === 'welcome');
+  // 設定ボタンは初回ウェルカム画面では非表示
+  if (btnOpenSettings) {
+    btnOpenSettings.classList.toggle('hidden', stateName === 'welcome');
   }
 }
 
@@ -139,13 +175,8 @@ function render() {
   // 通常カウントダウン画面（ステート2）
   showState('countdown');
 
-  // タブの同期
-  targetSwitcher.setAttribute('data-target', String(result.targetWeeks));
-  tabTarget12.classList.toggle('active', result.targetWeeks === 12);
-  tabTarget15.classList.toggle('active', result.targetWeeks === 15);
-
-  // 現在週数バッジ
-  badgeCurrentWeek.textContent = `🌱 現在 ${result.currentWeeks}週${result.currentDays}日`;
+  // 現在週数表示
+  displayCurrentWeeks.textContent = `${result.currentWeeks}週${result.currentDays}日`;
 
   // 耐えた時間バッジの表示チェック（セッション初回時）
   if (!enduranceBadgeChecked) {
@@ -165,7 +196,9 @@ function render() {
 
   // 目標達成判定
   if (result.isTargetReached) {
-    heroCountdownArea.classList.add('hidden');
+    displayHours.parentElement.classList.add('hidden');
+    displayDays.classList.add('hidden');
+    countdownTargetLabel.textContent = `${result.targetWeeks}週目を迎えました💐`;
     celebrationArea.classList.remove('hidden');
 
     if (result.targetWeeks === 12) {
@@ -175,21 +208,15 @@ function render() {
       celebrationMessage.textContent = '15週目を迎えました！本当にお疲れ様でした💐体調はいかがですか？';
       btnSwitchTo15.classList.add('hidden');
     }
-
-    statementPlate.textContent = `${result.currentWeeks}週${result.currentDays}日 ${result.targetWeeks}週目を迎えました！💐`;
   } else {
-    heroCountdownArea.classList.remove('hidden');
+    displayHours.parentElement.classList.remove('hidden');
+    displayDays.classList.remove('hidden');
     celebrationArea.classList.add('hidden');
 
+    countdownTargetLabel.textContent = `${result.targetWeeks}週目まで あと`;
     displayHours.textContent = result.remainingHours.toLocaleString('ja-JP');
     displayDays.textContent = `(約 ${result.remainingDays}日)`;
-    statementPlate.textContent = result.formattedText;
   }
-
-  // プログレスバーの更新
-  progressPercent.textContent = `${result.progressPercent}%`;
-  progressFill.style.width = `${result.progressPercent}%`;
-  progressTargetLabel.textContent = `目標 ${result.targetWeeks}週`;
 
   // 励ましメッセージ（日付に応じた日替わり）
   const dayIndex = now.getDate() % ENCOURAGEMENT_MESSAGES.length;
@@ -200,6 +227,9 @@ function render() {
  * アプリケーションの初期化
  */
 function init() {
+  // テーマ初期化
+  initTheme();
+
   // セレクトボックスの選択肢初期化
   populateWeeksSelect(selectOnboardingWeeks, 9);
   populateWeeksSelect(selectSettingsWeeks, 9);
@@ -209,7 +239,6 @@ function init() {
 
   if (currentSettings) {
     render();
-    // 最終アクセス時刻を更新
     updateLastAccess();
   } else {
     showState('welcome');
@@ -237,6 +266,9 @@ function init() {
  * イベントリスナーの設定
  */
 function setupEventListeners() {
+  // 明るさ切り替えボタン
+  btnThemeToggle.addEventListener('click', toggleTheme);
+
   // オンボーディングフォーム送信
   formOnboarding.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -258,10 +290,7 @@ function setupEventListeners() {
     render();
   });
 
-  // 目標切り替えタブ (12週 / 15週)
-  tabTarget12.addEventListener('click', () => switchTarget(12));
-  tabTarget15.addEventListener('click', () => switchTarget(15));
-
+  // 目標切り替え関数
   function switchTarget(target) {
     if (!currentSettings || currentSettings.targetWeeks === target) return;
     currentSettings.targetWeeks = target;

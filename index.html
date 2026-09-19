@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="つわりの出口（12週・15週）までの残り時間をカウントダウンするアプリ。1秒ごとの前進を可視化し、心に寄り添います。">
-  <meta name="theme-color" content="#FAF7F2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#181A20" media="(prefers-color-scheme: dark)">
-  <title>つわりカウントダウン | つわりん</title>
+  <meta name="description" content="出口までの残り時間をカウントダウンするアプリ。1分1秒の前進を優しく可視化します。">
+  <meta name="theme-color" content="#FAF7F2" id="meta-theme-color">
+  <title>tsuwarin</title>
 
-  <!-- Google Fonts: Zen Maru Gothic (和文丸ゴシック) & Outfit (数字・英文) -->
+  <!-- Google Fonts: Zen Maru Gothic (丸みのある優しいフォント) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
 
   <!-- スタイルシート (相対パス) -->
   <link rel="stylesheet" href="./css/style.css">
@@ -19,27 +18,32 @@
 <body>
   <div class="app-container">
 
-    <!-- アプリ共通ヘッダー -->
+    <!-- アプリ共通ヘッダー（左側アプリ名は非表示。右側に明るさ切替と設定） -->
     <header class="app-header">
-      <div class="brand">
-        <span class="brand-icon" aria-hidden="true">🌱</span>
-        <h1>つわりカウントダウン</h1>
+      <div class="header-spacer" aria-hidden="true"></div>
+      <div class="header-actions">
+        <!-- 画面の明るさ切り替えボタン（Day ☀️ / Night 🌙） -->
+        <button type="button" id="btn-theme-toggle" class="btn-theme-toggle" aria-label="画面の明るさを切り替える">
+          <span class="theme-icon" id="theme-icon" aria-hidden="true">🌙</span>
+          <span class="theme-text" id="theme-text">夜</span>
+        </button>
+        <!-- 設定ボタン -->
+        <button type="button" id="btn-open-settings" class="btn-icon" aria-label="設定を開く" title="設定">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
       </div>
-      <button id="btn-open-settings" class="btn-icon" aria-label="週数の再設定を開く" title="設定">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-      </button>
     </header>
 
     <!-- ======================================================================
          ステート 1: 初回オンボーディング画面 (未設定時)
          ====================================================================== -->
     <main id="state-welcome" class="card-welcome hidden">
-      <h2 class="welcome-title">つわりカウントダウンへ<br>ようこそ 🌱</h2>
+      <h2 class="welcome-title">ようこそ 🌱</h2>
       <p class="welcome-desc">
-        出口の見えない辛いつわりを、少しでも安心に変えられるように。<br>
+        出口の見えない辛い日々を、少しでも安心に変えられるように。<br>
         今の週数を教えてくださいね。
       </p>
 
@@ -68,7 +72,7 @@
           <span class="form-label">最初のカウントダウン目標</span>
           <div class="radio-pill-group">
             <input type="radio" id="target-choice-12" name="targetChoice" value="12" checked>
-            <label for="target-choice-12" class="radio-pill-label">12週まで（初期悪阻）</label>
+            <label for="target-choice-12" class="radio-pill-label">12週まで（第一の節目）</label>
 
             <input type="radio" id="target-choice-15" name="targetChoice" value="15">
             <label for="target-choice-15" class="radio-pill-label">15週まで（安定期前）</label>
@@ -85,70 +89,59 @@
 
     <!-- ======================================================================
          ステート 2: 通常カウントダウン画面 (〜15週)
+         全画面1枚のキャンバス。枠線・箱・重複テキスト・プログレスバーを全廃
          ====================================================================== -->
     <main id="state-countdown" class="state-countdown-container hidden">
 
-      <!-- ターゲット切り替えタブ (12週 / 15週) -->
-      <nav class="target-switcher" id="target-switcher" data-target="12" aria-label="目標週の切り替え">
-        <button type="button" class="target-tab active" id="tab-target-12" data-target="12">12週まで</button>
-        <button type="button" class="target-tab" id="tab-target-15" data-target="15">15週まで</button>
-        <div class="target-indicator" aria-hidden="true"></div>
-      </nav>
+      <!-- メインブロック（全画面中央配置） -->
+      <div class="main-canvas" id="main-canvas" aria-live="polite">
 
-      <!-- メインカウントダウンカード (Hero Card) -->
-      <section class="card-hero" id="card-hero" aria-live="polite">
-        <!-- 上部バッジ行 -->
-        <div class="badge-row">
-          <span class="badge-current-week" id="badge-current-week">🌱 現在 9週3日</span>
-          <span class="badge-endurance hidden" id="badge-endurance">前回から +8時間 耐えましたね🌱</span>
+        <!-- 現在の週数 -->
+        <div class="current-weeks-text" id="display-current-weeks">
+          9週3日
         </div>
 
-        <!-- カウントダウン中央表示 -->
-        <div class="hero-countdown-area" id="hero-countdown-area">
-          <div class="countdown-main">
-            <span class="countdown-prefix">あと</span>
-            <span class="number-font" id="display-hours">432</span>
-            <span class="countdown-unit">時間</span>
-          </div>
-          <div class="countdown-sub" id="display-days">(約 18日)</div>
+        <!-- 耐えた時間バッジ（控えめなピルタグ） -->
+        <div class="badge-wrapper">
+          <span class="badge-endurance hidden" id="badge-endurance">前回から +8時間 耐えました🌱</span>
         </div>
 
-        <!-- 12週達成時お祝いエリア（非表示デフォルト） -->
+        <!-- 目標接続文 -->
+        <div class="countdown-target-label" id="countdown-target-label">
+          12週目まで あと
+        </div>
+
+        <!-- メイン時間表示（特大数字と時間を横並び・ベースライン揃え） -->
+        <div class="countdown-primary-row">
+          <span class="countdown-number" id="display-hours">424</span>
+          <span class="countdown-unit">時間</span>
+        </div>
+
+        <!-- 日数目安（静かに補足） -->
+        <div class="countdown-days-sub" id="display-days">
+          (約 18日)
+        </div>
+
+        <!-- 12週達成時お祝いエリア（非表示デフォルト・12週到達時のみ案内） -->
         <div class="celebration-area hidden" id="celebration-area">
           <div class="celebration-icon" aria-hidden="true">💐</div>
           <p class="celebration-text" id="celebration-message">
-            12週目を迎えました！本当にお疲れ様でした💐体調はいかがですか？
+            12週目を迎えました！本当にお疲れ様でした💐
           </p>
           <button type="button" class="btn-primary" id="btn-switch-to-15">
-            15週（安定期直前）までのカウントに切り替える
+            15週までのカウントダウンへ進む 🌱
           </button>
         </div>
 
-        <!-- PRD指定フォーマット主文プレート -->
-        <div class="statement-plate" id="statement-plate">
-          9週3日 12週目まであと432時間(18日)
-        </div>
-      </section>
+      </div>
 
-      <!-- プログレスバー -->
-      <section class="progress-section" aria-label="妊娠進捗バー">
-        <div class="progress-meta">
-          <span>0週</span>
-          <span class="progress-percent number-font" id="progress-percent">78.5%</span>
-          <span id="progress-target-label">目標 12週</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progress-fill" style="width: 78.5%;"></div>
-        </div>
-      </section>
-
-      <!-- 寄り添い・励ましカード -->
-      <aside class="card-encouragement" id="card-encouragement">
-        <span class="encouragement-quote-icon" aria-hidden="true">💬</span>
+      <!-- 寄り添い・励ましメッセージ（画面最下部に静かに寄り添う） -->
+      <footer class="encouragement-footer">
+        <span class="encouragement-quote-icon" aria-hidden="true">🌱</span>
         <p class="encouragement-message" id="encouragement-message">
-          今日も1日耐えてえらい！本当によく頑張っているよ。
+          無理せず横になって、ゆっくり休んでね。
         </p>
-      </aside>
+      </footer>
 
     </main>
 
@@ -159,7 +152,7 @@
       <div class="celebration-icon" aria-hidden="true">💐</div>
       <h2 class="welcome-title">15週を乗り越えました！</h2>
       <p class="welcome-desc">
-        つわりの大きな出口の目安（15週）を通過しました。<br>
+        出口の目安（15週）を通過しました。<br>
         本当にお疲れ様でした。体調はいかがですか？
       </p>
 
@@ -167,13 +160,12 @@
         現在 16週2日
       </div>
 
-      <aside class="card-encouragement">
-        <span class="encouragement-quote-icon" aria-hidden="true">💬</span>
+      <div class="encouragement-footer">
+        <span class="encouragement-quote-icon" aria-hidden="true">🌱</span>
         <p class="encouragement-message">
-          赤ちゃんとママの歩みは順調に進んでいます。<br>
           無理をなさらず、ご自身の身体を一番に大切にしてくださいね。
         </p>
-      </aside>
+      </div>
 
       <button type="button" class="btn-secondary" id="btn-maturity-reconfigure">
         週数設定を再調整する
@@ -186,7 +178,7 @@
     <div class="modal-backdrop" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="modal-settings-title">
       <div class="modal-dialog">
         <div class="modal-header">
-          <h3 class="modal-title" id="modal-settings-title">妊娠週数の再設定</h3>
+          <h3 class="modal-title" id="modal-settings-title">設定</h3>
           <button type="button" id="btn-close-settings" class="btn-icon" aria-label="閉じる">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -215,7 +207,7 @@
           </div>
 
           <div class="form-group">
-            <span class="form-label">目標マイルストーン</span>
+            <span class="form-label">カウントダウン目標</span>
             <div class="radio-pill-group">
               <input type="radio" id="settings-target-12" name="settingsTarget" value="12">
               <label for="settings-target-12" class="radio-pill-label">12週まで</label>
@@ -227,8 +219,8 @@
 
           <div class="modal-footer">
             <button type="submit" class="btn-primary">保存して更新</button>
-            <button type="button" id="btn-reset-data" class="btn-secondary" style="color: #E07A5F; border-color: rgba(224, 122, 95, 0.3);">
-              データをリセットして初期画面に戻す
+            <button type="button" id="btn-reset-data" class="btn-secondary btn-reset">
+              データを初期化する
             </button>
           </div>
         </form>

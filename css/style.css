@@ -1,6 +1,7 @@
 /**
  * style.css - つわりカウントダウンアプリ (tsuwarin) スタイルシート
- * DESIGN.md ビジュアルデザイン仕様書に完全準拠
+ * DESIGN.md ビジュアルデザイン仕様書（ベッドサイド・サンクチュアリ）に完全準拠
+ * rem基準 / アクセシビリティ優先 / 箱感ゼロのミニマルデザイン
  */
 
 /* ==========================================================================
@@ -8,14 +9,14 @@
    ========================================================================== */
 
 :root {
-  /* Day Theme (Default - クリームアイボリー基調) */
+  /* Day Sanctuary (昼間用: 柔らかなクリームアイボリー基調) */
   --bg-base: #FAF7F2;
   --bg-surface: #FFFFFF;
   --bg-soft: #F3EFEA;
   --text-primary: #2D3142;
   --text-secondary: #5C6479;
   
-  /* アクセントカラー (WCAG 2.1 AA 4.5:1 達成のテキスト用を分離) */
+  /* アクセントカラー (WCAG 2.1 AA 4.5:1 適合) */
   --color-primary: #E07A5F;
   --color-primary-text: #B85338;
   --color-primary-light: #F9EAE1;
@@ -28,23 +29,32 @@
   --color-accent: #F2CC8F;
   --border-subtle: #EBE4DB;
 
-  /* シャドウ */
+  /* シャドウ（控えめで柔らかな陰影） */
   --shadow-sm: 0 2px 8px rgba(45, 49, 66, 0.04);
   --shadow-md: 0 4px 16px rgba(45, 49, 66, 0.08);
   --shadow-lg: 0 10px 30px rgba(45, 49, 66, 0.12);
 
   /* 角丸 */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-sm: 0.5rem;   /* 8px */
+  --radius-md: 0.875rem; /* 14px */
+  --radius-lg: 1.25rem;  /* 20px */
   --radius-full: 9999px;
 
-  /* レスポンシブ垂直スペーシング (iPhone SE 等の小型画面に合わせて伸縮) */
-  --space-xs: 4px;
-  --space-sm: clamp(6px, 1.2vh, 8px);
-  --space-md: clamp(10px, 1.8vh, 16px);
-  --space-lg: clamp(12px, 2.4vh, 20px);
-  --space-xl: clamp(16px, 3.0vh, 24px);
+  /* rem基準のタイプスケール */
+  --font-size-hero: clamp(3rem, 12vw, 3.75rem);       /* 48px 〜 60px */
+  --font-size-unit: clamp(1rem, 4vw, 1.125rem);       /* 16px 〜 18px */
+  --font-size-weeks: clamp(1.125rem, 4.5vw, 1.25rem); /* 18px 〜 20px */
+  --font-size-label: 0.875rem;                        /* 14px */
+  --font-size-sub: 0.875rem;                          /* 14px */
+  --font-size-badge: 0.8125rem;                       /* 13px */
+  --font-size-message: 0.84375rem;                    /* 13.5px */
+
+  /* スペーシング */
+  --space-xs: 0.25rem; /* 4px */
+  --space-sm: 0.5rem;  /* 8px */
+  --space-md: 1rem;    /* 16px */
+  --space-lg: 1.5rem;  /* 24px */
+  --space-xl: 2rem;    /* 32px */
 
   /* トランジション */
   --ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
@@ -52,30 +62,55 @@
   --duration-normal: 0.3s;
 }
 
-/* Night Sanctuary (暗所・夜間ベッドサイド用ダークモード) */
+/* Night Sanctuary (夜間寝室用: 低刺激ディープスレート) */
+html[data-theme="dark"] {
+  --bg-base: #16181D;
+  --bg-surface: #1F222A;
+  --bg-soft: #272B35;
+  --text-primary: #E2E4EB;
+  --text-secondary: #9398A7;
+
+  --color-primary: #E07A5F;
+  --color-primary-text: #F09A85;
+  --color-primary-light: #2E2320;
+  --color-primary-hover: #E78F77;
+
+  --color-secondary: #81B29A;
+  --color-secondary-text: #9DD4B8;
+  --color-secondary-light: #1C2922;
+
+  --color-accent: #F2CC8F;
+  --border-subtle: #292D38;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* OSのダークモード設定に連動（手動未指定時のデフォルト） */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg-base: #181A20;
-    --bg-surface: #22252E;
-    --bg-soft: #2C303C;
-    --text-primary: #E6E8EE;
-    --text-secondary: #9CA3AF;
+  html:not([data-theme="light"]) {
+    --bg-base: #16181D;
+    --bg-surface: #1F222A;
+    --bg-soft: #272B35;
+    --text-primary: #E2E4EB;
+    --text-secondary: #9398A7;
 
     --color-primary: #E07A5F;
-    --color-primary-text: #F4A28C;
-    --color-primary-light: #382622;
+    --color-primary-text: #F09A85;
+    --color-primary-light: #2E2320;
     --color-primary-hover: #E78F77;
 
     --color-secondary: #81B29A;
-    --color-secondary-text: #A3D9BE;
-    --color-secondary-light: #1E2D26;
+    --color-secondary-text: #9DD4B8;
+    --color-secondary-light: #1C2922;
 
     --color-accent: #F2CC8F;
-    --border-subtle: #2D3240;
+    --border-subtle: #292D38;
 
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -90,9 +125,16 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+html {
+  font-size: 16px;
   width: 100%;
   height: 100%;
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
   overflow-x: hidden;
   background-color: var(--bg-base);
   color: var(--text-primary);
@@ -100,22 +142,10 @@ html, body {
   font-weight: 500;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background-color var(--duration-normal) var(--ease-soft), color var(--duration-normal) var(--ease-soft);
 }
 
-h1, h2, h3 {
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-}
-
-/* 数字フォント（等幅・桁ブレ防止） */
-.number-font {
-  font-family: "Outfit", "Zen Maru Gothic", sans-serif;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-}
-
-/* アプリケーション外枠コンテナ（iPhone SE 375x667 に対応する1画面収容） */
+/* アプリケーション外枠コンテナ（iPhone SE 375x667 にも1画面で収容） */
 .app-container {
   width: 100%;
   max-width: 420px;
@@ -123,50 +153,73 @@ h1, h2, h3 {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) 16px;
-  gap: var(--space-md);
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)) 1rem;
 }
 
 /* ==========================================================================
-   3. ヘッダー (App Header)
+   3. ヘッダー (App Header) - 左側アプリ名は非表示
    ========================================================================== */
 
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 44px;
+  min-height: 2.75rem; /* 44px */
   flex-shrink: 0;
+  padding: 0.25rem 0;
 }
 
-.brand {
+.header-spacer {
+  flex: 1;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 16px;
-  font-weight: 700;
+  gap: 0.5rem;
+}
+
+/* 明るさ切り替えピルボタン (☀️ 昼 / 🌙 夜) */
+.btn-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.75rem; /* 44px タップ領域 */
+  padding: 0.35rem 0.85rem;
+  background-color: var(--bg-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
   color: var(--text-primary);
-  user-select: none;
-  white-space: nowrap;
-}
-
-.brand h1 {
-  font-size: 16px;
+  font-family: inherit;
+  font-size: 0.875rem;
   font-weight: 700;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-soft);
 }
 
-.brand-icon {
-  font-size: 18px;
-  display: inline-block;
-  transform-origin: bottom center;
+.btn-theme-toggle:hover, .btn-theme-toggle:focus-visible {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
+.theme-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.theme-text {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+/* 設定アイコンボタン (⚙️) */
 .btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;  /* 44px */
+  height: 2.75rem; /* 44px */
   background: transparent;
   border: none;
   border-radius: var(--radius-full);
@@ -182,370 +235,244 @@ h1, h2, h3 {
 }
 
 /* ==========================================================================
-   4. メインカウントダウンコンテナ (State Countdown Container)
+   4. メインカウントダウン画面 (State Countdown)
+   四角いカード（座布団）を完全撤廃し、全画面1枚のキャンバス
    ========================================================================== */
 
 .state-countdown-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  justify-content: space-between;
+  align-items: center;
   flex-grow: 1;
-  justify-content: center;
-}
-
-/* ==========================================================================
-   4. ターゲット切り替えタブ (Target Switcher)
-   ========================================================================== */
-
-.target-switcher {
-  display: flex;
-  position: relative;
-  background-color: var(--bg-soft);
-  border-radius: var(--radius-full);
-  padding: 3px;
-  width: 100%;
-  height: 40px;
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.target-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-full);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  z-index: 1;
-  transition: color var(--duration-fast) var(--ease-soft);
-}
-
-.target-tab.active {
-  color: var(--color-primary-text);
-  font-weight: 700;
-}
-
-/* スライドするアクティブ背景インジケーター */
-.target-indicator {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 3px;
-  width: calc(50% - 3px);
-  background-color: var(--bg-surface);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--duration-normal) var(--ease-soft);
-  z-index: 0;
-}
-
-.target-switcher[data-target="15"] .target-indicator {
-  transform: translateX(100%);
-}
-
-/* ==========================================================================
-   5. メインカウントダウンカード (Hero Countdown Card)
-   ========================================================================== */
-
-.card-hero {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: clamp(14px, 2.2vh, 20px) 16px;
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
-  gap: var(--space-sm);
-  flex-shrink: 0;
+  padding: 1rem 0 0.5rem 0;
 }
 
-/* 上部バッジ行 */
-.badge-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.badge-current-week {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-text);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.badge-endurance {
-  background-color: var(--color-secondary-light);
-  color: var(--color-secondary-text);
-  border: 1px solid rgba(129, 178, 154, 0.4);
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 700;
-  animation: fadeIn 0.4s var(--ease-soft);
-  transition: opacity 1.5s ease-out;
-}
-
-/* メイン数値表示エリア */
-.hero-countdown-area {
+/* 全画面中央キャンバスブロック */
+.main-canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  margin: var(--space-xs) 0;
-}
-
-.countdown-main {
-  font-size: clamp(32px, 8.5vw, 42px);
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.1;
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.countdown-unit {
-  font-size: clamp(15px, 4vw, 18px);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.countdown-sub {
-  font-size: clamp(13px, 3.6vw, 15px);
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* 指定フォーマット主文プレート (PRD必須フォーマット) */
-.statement-plate {
+  justify-content: center;
+  gap: 0.75rem;
+  flex-grow: 1;
   width: 100%;
-  background-color: var(--bg-soft);
-  border-radius: var(--radius-md);
-  padding: clamp(8px, 1.4vh, 12px) 10px;
-  font-size: clamp(13px, 3.5vw, 15px);
+  margin: auto 0;
+}
+
+/* 現在週数表示 */
+.current-weeks-text {
+  font-size: var(--font-size-weeks);
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 
-/* 達成時ステート */
-.card-celebration {
-  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--color-primary-light) 100%);
-  border: 1px solid var(--color-accent);
+/* 耐えた時間バッジ */
+.badge-wrapper {
+  min-height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-endurance {
+  display: inline-block;
+  background-color: var(--color-secondary-light);
+  color: var(--color-secondary-text);
+  padding: 0.25rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-badge);
+  font-weight: 700;
+  animation: fadeIn 0.4s var(--ease-soft);
+  transition: opacity 1.5s ease-out;
+}
+
+/* 目標ラベル */
+.countdown-target-label {
+  font-size: var(--font-size-label);
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* メイン時間行（数字と時間を横並び・ベースライン揃え） */
+.countdown-primary-row {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1;
+}
+
+.countdown-number {
+  font-family: "Zen Maru Gothic", sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-hero);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.countdown-unit {
+  font-size: var(--font-size-unit);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* 日数目安 */
+.countdown-days-sub {
+  font-size: var(--font-size-sub);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* 12週達成時お祝いエリア */
+.celebration-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary-light);
 }
 
 .celebration-icon {
-  font-size: 36px;
-  margin-bottom: var(--space-xs);
+  font-size: 2rem;
 }
 
 .celebration-text {
-  font-size: clamp(14px, 3.8vw, 16px);
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.5;
-  margin-bottom: var(--space-sm);
 }
 
-/* ==========================================================================
-   6. プログレスバー (Progress Bar)
-   ========================================================================== */
-
-.progress-section {
-  width: 100%;
+/* 寄り添いフッターメッセージ */
+.encouragement-footer {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.progress-meta {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  padding: 0 2px;
-}
-
-.progress-percent {
-  font-weight: 700;
-  color: var(--color-secondary-text);
-  font-size: 13px;
-}
-
-.progress-track {
-  width: 100%;
-  height: 10px;
-  background-color: var(--color-secondary-light);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  position: relative;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #A3D9BE 0%, var(--color-secondary) 100%);
-  border-radius: var(--radius-full);
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ==========================================================================
-   7. 寄り添い・励ましカード (Encouragement Card)
-   ========================================================================== */
-
-.card-encouragement {
-  background-color: var(--color-primary-light);
-  border-left: 4px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  padding: clamp(10px, 1.6vh, 14px) 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  justify-content: center;
+  text-align: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .encouragement-quote-icon {
-  font-size: 18px;
+  font-size: 0.875rem;
   line-height: 1;
-  color: var(--color-primary-text);
+  opacity: 0.8;
 }
 
 .encouragement-message {
-  font-size: clamp(13px, 3.4vw, 14px);
-  color: var(--text-primary);
+  font-size: var(--font-size-message);
+  color: var(--text-secondary);
   line-height: 1.6;
   font-weight: 500;
 }
 
 /* ==========================================================================
-   8. 15週超過画面 (Post-15 Weeks State)
-   ========================================================================== */
-
-.card-maturity {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: clamp(20px, 3.5vh, 28px) 18px;
-  box-shadow: var(--shadow-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-md);
-  flex-grow: 1;
-  justify-content: center;
-}
-
-.maturity-weeks-display {
-  font-size: clamp(34px, 9vw, 44px);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: var(--space-xs) 0;
-}
-
-/* ==========================================================================
-   9. ウェルカム・オンボーディング画面 (Welcome State)
+   5. ウェルカム・オンボーディング画面 (Welcome State)
    ========================================================================== */
 
 .card-welcome {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: clamp(20px, 3.0vh, 26px) 18px;
-  box-shadow: var(--shadow-md);
+  padding: clamp(1.5rem, 4vh, 2rem) 1.25rem;
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: clamp(1rem, 2.5vh, 1.5rem);
   flex-grow: 1;
   justify-content: center;
+  margin: auto 0;
 }
 
 .welcome-title {
-  font-size: clamp(19px, 4.8vw, 22px);
+  font-size: clamp(1.25rem, 5vw, 1.45rem);
   font-weight: 700;
   text-align: center;
   color: var(--text-primary);
+  line-height: 1.35;
 }
 
 .welcome-desc {
-  font-size: 14px;
+  font-size: 0.875rem;
   text-align: center;
   color: var(--text-secondary);
   line-height: 1.6;
 }
 
+.form-onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2.2vh, 1.25rem);
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .form-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .picker-row {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .select-control {
   flex: 1;
-  height: 48px;
+  height: 3rem; /* 48px */
   background-color: var(--bg-soft);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  padding: 0 12px;
+  padding: 0 0.75rem;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235C6479' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 0.75rem center;
   cursor: pointer;
-  transition: border-color var(--duration-fast);
+  transition: border-color var(--duration-fast), background-color var(--duration-fast);
 }
 
 .select-control:focus {
   outline: none;
   border-color: var(--color-primary);
+  background-color: var(--bg-surface);
 }
 
 /* ラジオボタングループ (目標選択) */
 .radio-pill-group {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .radio-pill-label {
   flex: 1;
-  height: 44px;
+  min-height: 2.75rem; /* 44px */
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: var(--bg-soft);
   border: 1.5px solid transparent;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 0.84375rem;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -564,22 +491,22 @@ h1, h2, h3 {
   font-weight: 700;
 }
 
-/* プライマリボタン (CTA) */
+/* ボタン (CTA) */
 .btn-primary {
   width: 100%;
-  height: 50px;
+  min-height: 3.125rem; /* 50px */
   background-color: var(--color-primary);
   color: #FFFFFF;
   border: none;
   border-radius: var(--radius-full);
   font-family: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
   box-shadow: 0 4px 12px rgba(224, 122, 95, 0.25);
   transition: background-color var(--duration-fast), transform var(--duration-fast);
 }
@@ -590,13 +517,13 @@ h1, h2, h3 {
 
 .btn-secondary {
   width: 100%;
-  height: 46px;
+  min-height: 2.875rem; /* 46px */
   background-color: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--duration-fast);
@@ -607,20 +534,48 @@ h1, h2, h3 {
   color: var(--text-primary);
 }
 
+.btn-reset {
+  color: var(--color-primary-text);
+  border-color: rgba(224, 122, 95, 0.3);
+}
+
 /* ==========================================================================
-   10. モーダル (Settings Modal)
+   6. 15週超過画面 (Post-15 Weeks State)
+   ========================================================================== */
+
+.card-maturity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  flex-grow: 1;
+  justify-content: center;
+  margin: auto 0;
+  padding: 1.5rem 0;
+}
+
+.maturity-weeks-display {
+  font-size: clamp(2.25rem, 8.5vw, 2.75rem);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0.5rem 0;
+}
+
+/* ==========================================================================
+   7. 設定モーダル (Settings Modal)
    ========================================================================== */
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(45, 49, 66, 0.4);
+  background-color: rgba(22, 24, 29, 0.5);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 1rem;
   z-index: 100;
   opacity: 0;
   visibility: hidden;
@@ -636,12 +591,13 @@ h1, h2, h3 {
   width: 100%;
   max-width: 380px;
   background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 22px 18px;
+  padding: 1.5rem 1.25rem;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 1rem;
   transform: scale(0.95);
   transition: transform var(--duration-normal) var(--ease-soft);
 }
@@ -657,20 +613,26 @@ h1, h2, h3 {
 }
 
 .modal-title {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.form-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .modal-footer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: var(--space-xs);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 /* ==========================================================================
-   11. ユーティリティ & アニメーション
+   8. ユーティリティ & アニメーション
    ========================================================================== */
 
 .hidden {
@@ -688,7 +650,7 @@ h1, h2, h3 {
   }
 }
 
-/* 視覚効果低減設定（prefers-reduced-motion）の完全尊重 */
+/* 視覚効果低減設定（prefers-reduced-motion）の尊重 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

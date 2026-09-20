@@ -372,8 +372,12 @@ body {
 .encouragement-message {
   font-size: var(--font-size-message);
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
   font-weight: 500;
+  word-break: auto-phrase;
+  text-wrap: balance;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 /* ==========================================================================

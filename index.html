@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja" data-theme="light">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -24,6 +25,7 @@
   <!-- スタイルシート (相対パス) -->
   <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
   <div class="app-container">
 
@@ -38,9 +40,11 @@
         </button>
         <!-- 設定ボタン -->
         <button type="button" id="btn-open-settings" class="btn-icon" aria-label="設定を開く" title="設定">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-            <circle cx="12" cy="12" r="3"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path
+              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
           </svg>
         </button>
       </div>
@@ -91,7 +95,6 @@
         <!-- 開始ボタン -->
         <button type="submit" id="btn-start-countdown" class="btn-primary">
           <span>カウントダウンをはじめる</span>
-          <span aria-hidden="true">✨</span>
         </button>
       </form>
     </main>
@@ -146,7 +149,6 @@
 
       <!-- 寄り添い・励ましメッセージ（画面最下部に静かに寄り添う） -->
       <footer class="encouragement-footer">
-        <span class="encouragement-quote-icon" aria-hidden="true">🌱</span>
         <p class="encouragement-message" id="encouragement-message">
           無理せず横になって、ゆっくり休んでね。
         </p>
@@ -170,7 +172,6 @@
       </div>
 
       <div class="encouragement-footer">
-        <span class="encouragement-quote-icon" aria-hidden="true">🌱</span>
         <p class="encouragement-message">
           無理をなさらず、ご自身の身体を一番に大切にしてくださいね。
         </p>
@@ -184,14 +185,16 @@
     <!-- ======================================================================
          設定・再入力モーダル (Settings Modal)
          ====================================================================== -->
-    <div class="modal-backdrop" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="modal-settings-title">
+    <div class="modal-backdrop" id="modal-settings" role="dialog" aria-modal="true"
+      aria-labelledby="modal-settings-title">
       <div class="modal-dialog">
         <div class="modal-header">
           <h3 class="modal-title" id="modal-settings-title">設定</h3>
           <button type="button" id="btn-close-settings" class="btn-icon" aria-label="閉じる">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
@@ -241,4 +244,5 @@
   <!-- アプリケーションスクリプト (ES Modules) -->
   <script type="module" src="./js/app.js?v=2"></script>
 </body>
+
 </html>

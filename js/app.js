@@ -6,18 +6,66 @@
 import { calcDayZeroMidnight, calcProgress } from './calculator.js';
 import { loadSettings, saveSettings, updateLastAccess, getElapsedEndurance, clearSettings } from './storage.js';
 
-// 夫から奥様への温かい寄り添いメッセージ（日替わり）
-const ENCOURAGEMENT_MESSAGES = [
-  '今日も1日耐えてえらい！本当によく頑張っているよ。',
-  '赤ちゃんもママと一緒に、一歩ずつ大きくなっているよ🌱',
-  '無理せず横になって、ゆっくり休んでね。',
-  '食べられる時に、食べられるものだけで大丈夫だよ。',
-  '1分1秒、確実にゴールに近づいているよ。',
-  'いつでも頼ってね。一緒に乗り越えようね。',
-  '身体が一生懸命に赤ちゃんを守っている証拠だよ。',
-  '今日を乗り切った分、また一歩前進したね✨',
-  '深呼吸して、自分をたくさん褒めてあげてね。'
-];
+// 時間帯連動の寄り添い・ポジティブメッセージ（夫から奥様へ）
+const TIME_BASED_MESSAGES = {
+  // 朝（5:00〜10:59）: つわりの朝を迎えられたことを肯定し、心身をいたわる言葉
+  morning: [
+    '朝起きられただけで百点満点だよ🌱 無理せず横になっててね。',
+    '朝の体調はどうかな？ 何もできなくて大丈夫、休むのが今のお仕事だよ。',
+    '今日も赤ちゃんとお腹の中で新しい1日を迎えたね✨',
+    'しんどい時は深呼吸。焦らず、今日ものんびりいこうね🌱'
+  ],
+  // 昼（11:00〜16:59）: 食べられない不安を和らげ、前進をポジティブに伝える言葉
+  daytime: [
+    '食べられる時に、食べられるものだけで大丈夫だよ。ゼリーでも氷でも◎',
+    '1分1秒、確実にゴールに近づいているよ。お昼もゆっくり休んでね🌱',
+    '赤ちゃんもママのお腹の中で、一歩ずつすくすく大きくなっているよ✨',
+    '今日ここまで過ごせた自分を、たくさん褒めてあげてね💐'
+  ],
+  // 夕方・夜（17:00〜21:59）: 今日1日を耐え抜いたことへのねぎらいと前進の実感
+  evening: [
+    '今日も1日耐えてえらい！本当によく頑張ったね、お疲れ様💐',
+    '今日を乗り切った分、出口にまた一歩確実に近づいたよ✨',
+    'いつでも頼ってね。一緒に一歩ずつ乗り越えようね🌱',
+    '身体が一生懸命に赤ちゃんを守り育てている証拠だよ。えらいよ。'
+  ],
+  // 深夜・早朝（22:00〜4:59）: 暗い部屋で目が覚めた時の不安や孤独を包み込む言葉
+  night: [
+    '夜中に目が覚めちゃったかな。ゆっくり深呼吸して横になっててね🌙',
+    '眠れなくても、目を閉じて横になっているだけで身体は休まっているよ🌱',
+    '静かな夜も、時間はちゃんと進んでいるよ。大丈夫、味方だよ。',
+    '赤ちゃんもママと一緒に、お腹の中でスヤスヤ休んでいるよ✨'
+  ]
+};
+
+let currentMessage = '';
+let currentSlot = '';
+
+/**
+ * 現在の時間帯とメッセージを取得する
+ */
+function getRandomMessageForCurrentTime() {
+  const hour = new Date().getHours();
+  let slot = 'night';
+  if (hour >= 5 && hour < 11) {
+    slot = 'morning';
+  } else if (hour >= 11 && hour < 17) {
+    slot = 'daytime';
+  } else if (hour >= 17 && hour < 22) {
+    slot = 'evening';
+  }
+
+  const list = TIME_BASED_MESSAGES[slot];
+  // 前と同じメッセージが連続しないように抽選
+  const available = list.filter(m => m !== currentMessage);
+  const nextMsg = available.length > 0
+    ? available[Math.floor(Math.random() * available.length)]
+    : list[0];
+
+  currentSlot = slot;
+  currentMessage = nextMsg;
+  return nextMsg;
+}
 
 // DOM要素の参照
 const stateWelcome = document.getElementById('state-welcome');
@@ -218,9 +266,17 @@ function render() {
     displayDays.textContent = `(約 ${result.remainingDays}日)`;
   }
 
-  // 励ましメッセージ（日付に応じた日替わり）
-  const dayIndex = now.getDate() % ENCOURAGEMENT_MESSAGES.length;
-  encouragementMessage.textContent = ENCOURAGEMENT_MESSAGES[dayIndex];
+  // 励ましメッセージ（時間帯連動・ポジティブメッセージ）
+  const hour = now.getHours();
+  let currentSlotCheck = 'night';
+  if (hour >= 5 && hour < 11) currentSlotCheck = 'morning';
+  else if (hour >= 11 && hour < 17) currentSlotCheck = 'daytime';
+  else if (hour >= 17 && hour < 22) currentSlotCheck = 'evening';
+
+  // 初回、または時間帯が変わった場合に更新
+  if (!currentMessage || currentSlot !== currentSlotCheck) {
+    encouragementMessage.textContent = getRandomMessageForCurrentTime();
+  }
 }
 
 /**
@@ -251,9 +307,10 @@ function init() {
     updateLastAccess();
   }, 60000);
 
-  // バックグラウンド復帰時の時間同期
+  // バックグラウンド復帰時の時間同期 & メッセージ更新
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
+      currentMessage = '';
       render();
       updateLastAccess();
     }
@@ -344,6 +401,21 @@ function setupEventListeners() {
     closeSettingsModal();
     render();
   });
+
+  // 励ましメッセージのタップ切り替え
+  const encouragementFooter = document.querySelector('.encouragement-footer');
+  if (encouragementFooter) {
+    encouragementFooter.style.cursor = 'pointer';
+    encouragementFooter.setAttribute('title', 'タップで別のメッセージを表示');
+    encouragementFooter.addEventListener('click', () => {
+      encouragementMessage.style.transition = 'opacity 0.18s ease';
+      encouragementMessage.style.opacity = '0';
+      setTimeout(() => {
+        encouragementMessage.textContent = getRandomMessageForCurrentTime();
+        encouragementMessage.style.opacity = '1';
+      }, 180);
+    });
+  }
 
   // リセットボタン
   btnResetData.addEventListener('click', () => {

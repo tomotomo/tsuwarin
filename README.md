@@ -44,12 +44,12 @@
 </p>
 
 ### iPhone (Safari)
-1. 上記QRコードまたはURL（[https://tomotomo.github.io/tsuwarin/](https://tomotomo.github.io/tsuwarin/)）にアクセス
+1. 上記QRコードまたはURL（<https://tomotomo.github.io/tsuwarin/>）にアクセス
 2. 画面下部の中央にある **「共有」アイコン（四角から矢印）** をタップ
 3. メニューから **「ホーム画面に追加」** を選択
 
 ### Android (Chrome)
-1. 公開URLにアクセス
+1. 上記QRコードまたはURL（<https://tomotomo.github.io/tsuwarin/>）にアクセス
 2. 右上の **「︙（メニュー）」** をタップ
 3. **「ホーム画面に追加」** または **「アプリをインストール」** を選択
 

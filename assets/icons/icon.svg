@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 背景: 穏やかなクリームアイボリー -->
+  <rect width="512" height="512" fill="#FAF7F2"/>
+  
+  <!-- 微細な温もりサークル（やわらかな光の包まれ感） -->
+  <circle cx="256" cy="256" r="190" fill="#F4EFEA"/>
+
+  <!-- 芽生え 🌱 のシンボル -->
+  <g transform="translate(0, 10)">
+    <!-- 茎 (Stem) -->
+    <path d="M 256 370 C 256 290 256 240 256 210" 
+          stroke="#72A98F" stroke-width="24" stroke-linecap="round" fill="none"/>
+    
+    <!-- 左の若葉 (Left Leaf) -->
+    <path d="M 256 245 C 240 180 180 145 130 160 C 120 215 160 275 256 250 Z" 
+          fill="#86BCA4"/>
+    <!-- 左葉の葉脈ハイライト -->
+    <path d="M 256 245 C 210 215 175 190 145 175" 
+          stroke="#FAF7F2" stroke-width="6" stroke-linecap="round" opacity="0.6" fill="none"/>
+
+    <!-- 右の若葉 (Right Leaf) -->
+    <path d="M 256 220 C 275 150 340 115 395 130 C 405 190 365 255 256 230 Z" 
+          fill="#72A98F"/>
+    <!-- 右葉の葉脈ハイライト -->
+    <path d="M 256 220 C 305 185 345 160 380 145" 
+          stroke="#FAF7F2" stroke-width="6" stroke-linecap="round" opacity="0.6" fill="none"/>
+
+    <!-- 足元の小さな大地・根元のやさしい土台 -->
+    <path d="M 220 376 C 240 372 272 372 292 376" 
+          stroke="#D8CAB8" stroke-width="12" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

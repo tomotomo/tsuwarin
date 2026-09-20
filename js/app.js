@@ -402,21 +402,6 @@ function setupEventListeners() {
     render();
   });
 
-  // 励ましメッセージのタップ切り替え
-  const encouragementFooter = document.querySelector('.encouragement-footer');
-  if (encouragementFooter) {
-    encouragementFooter.style.cursor = 'pointer';
-    encouragementFooter.setAttribute('title', 'タップで別のメッセージを表示');
-    encouragementFooter.addEventListener('click', () => {
-      encouragementMessage.style.transition = 'opacity 0.18s ease';
-      encouragementMessage.style.opacity = '0';
-      setTimeout(() => {
-        encouragementMessage.textContent = getRandomMessageForCurrentTime();
-        encouragementMessage.style.opacity = '1';
-      }, 180);
-    });
-  }
-
   // リセットボタン
   btnResetData.addEventListener('click', () => {
     if (confirm('設定をリセットして初期画面に戻しますか？')) {

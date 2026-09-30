@@ -109,7 +109,43 @@ const maturityWeeksDisplay = document.getElementById('maturity-weeks-display');
 let currentSettings = null;
 let dayZeroMidnight = null;
 let timerId = null;
-let enduranceBadgeChecked = false;
+let enduranceFadeTimeoutId = null;
+let lastResumeTime = 0;
+
+/**
+ * 前回アクセスからの経過時間（耐えた時間）を計算し、バッジを更新・表示する
+ */
+function checkAndDisplayEnduranceBadge() {
+  if (!currentSettings || !currentSettings.lastAccessTimestamp) {
+    badgeEndurance.classList.add('hidden');
+    return;
+  }
+
+  const now = Date.now();
+  const lastAccess = currentSettings.lastAccessTimestamp;
+  const endurance = getElapsedEndurance(lastAccess, now);
+
+  if (endurance && endurance.text) {
+    if (enduranceFadeTimeoutId) {
+      clearTimeout(enduranceFadeTimeoutId);
+      enduranceFadeTimeoutId = null;
+    }
+    badgeEndurance.textContent = endurance.text;
+    badgeEndurance.style.opacity = '1';
+    badgeEndurance.classList.remove('hidden');
+
+    // 6秒後に静かにオパシティを落ち着かせる（ベッドサイドでの眩しさを防止）
+    enduranceFadeTimeoutId = setTimeout(() => {
+      badgeEndurance.style.opacity = '0.75';
+    }, 6000);
+  } else {
+    badgeEndurance.classList.add('hidden');
+  }
+
+  // バッジ計算完了後、今回のセッション開始時刻として記録
+  updateLastAccess(now);
+  currentSettings.lastAccessTimestamp = now;
+}
 
 /**
  * テーマ管理（Day ☀️ / Night 🌙）
@@ -226,22 +262,6 @@ function render() {
   // 現在週数表示
   displayCurrentWeeks.textContent = `${result.currentWeeks}週${result.currentDays}日`;
 
-  // 耐えた時間バッジの表示チェック（セッション初回時）
-  if (!enduranceBadgeChecked) {
-    enduranceBadgeChecked = true;
-    const endurance = getElapsedEndurance(currentSettings.lastAccessTimestamp);
-    if (endurance && endurance.text) {
-      badgeEndurance.textContent = endurance.text;
-      badgeEndurance.classList.remove('hidden');
-      // 6秒後に静かにオパシティを落ち着かせる
-      setTimeout(() => {
-        badgeEndurance.style.opacity = '0.75';
-      }, 6000);
-    } else {
-      badgeEndurance.classList.add('hidden');
-    }
-  }
-
   // 目標達成判定
   if (result.isTargetReached) {
     displayHours.parentElement.classList.add('hidden');
@@ -280,6 +300,30 @@ function render() {
 }
 
 /**
+ * アプリケーションの復帰（Resume）ハンドラ
+ * 画面スリープ解除、タブ切り替え、別アプリからの復帰時に正確に同期する
+ */
+function handleAppResume() {
+  const now = Date.now();
+  // 複数イベント（pageshow, visibilitychange, focus）の連続発火（1秒以内）をデバウンス
+  if (now - lastResumeTime < 1000) return;
+  lastResumeTime = now;
+
+  // 最新の設定を再読み込み
+  currentSettings = loadSettings();
+  if (!currentSettings) return;
+
+  // 1. 耐えた時間バッジの再計算と更新（前回の離脱からの経過時間）
+  checkAndDisplayEnduranceBadge();
+
+  // 2. 時間帯メッセージのリセット（新しい時間帯への更新）
+  currentMessage = '';
+
+  // 3. UIの再描画（残り時間、週数など）
+  render();
+}
+
+/**
  * アプリケーションの初期化
  */
 function init() {
@@ -295,7 +339,7 @@ function init() {
 
   if (currentSettings) {
     render();
-    updateLastAccess();
+    checkAndDisplayEnduranceBadge();
   } else {
     showState('welcome');
   }
@@ -303,17 +347,35 @@ function init() {
   // 定期タイマー（毎分更新）
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
+    // バックグラウンド非表示時は余計な処理・タイムスタンプ更新を行わない
+    if (document.visibilityState === 'hidden') return;
     render();
     updateLastAccess();
   }, 60000);
 
-  // バックグラウンド復帰時の時間同期 & メッセージ更新
+  // 画面復帰・離脱イベント（iOS Safari / Android Chrome 完全対応）
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-      currentMessage = '';
-      render();
-      updateLastAccess();
+      handleAppResume();
+    } else if (document.visibilityState === 'hidden') {
+      // 画面を閉じた・非表示になった瞬間に正確な離脱時刻を保存
+      updateLastAccess(Date.now());
     }
+  });
+
+  // iOS Safari / bfcache 復帰時のイベント
+  window.addEventListener('pageshow', () => {
+    handleAppResume();
+  });
+
+  // ウィンドウフォーカス復帰時のイベント
+  window.addEventListener('focus', () => {
+    handleAppResume();
+  });
+
+  // ページアンロード・タブ離脱時の正確な離脱時刻保存
+  window.addEventListener('pagehide', () => {
+    updateLastAccess(Date.now());
   });
 
   setupEventListeners();
@@ -343,7 +405,7 @@ function setupEventListeners() {
     });
 
     dayZeroMidnight = null;
-    enduranceBadgeChecked = false;
+    badgeEndurance.classList.add('hidden');
     render();
   });
 

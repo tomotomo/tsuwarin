@@ -76,9 +76,9 @@ export function getElapsedEndurance(lastAccessTimestamp, currentTimestamp = Date
 
   const deltaMs = currentTimestamp - lastAccessTimestamp;
 
-  // 30分（1800秒）未満のリロードや連続操作時はバッジ非表示
+  // 負の値（時計のズレや逆転）または30分（1800秒）未満のリロードや連続操作時はバッジ非表示
   const thirtyMinutesMs = 30 * 60 * 1000;
-  if (deltaMs < thirtyMinutesMs) {
+  if (deltaMs < thirtyMinutesMs || isNaN(deltaMs)) {
     return null;
   }
 

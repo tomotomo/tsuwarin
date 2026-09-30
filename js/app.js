@@ -431,8 +431,19 @@ function setupEventListeners() {
 
   function openSettingsModal() {
     if (currentSettings) {
-      selectSettingsWeeks.value = String(currentSettings.baseWeeks);
-      selectSettingsDays.value = String(currentSettings.baseDays);
+      // 起点日が未計算の場合は算出
+      if (!dayZeroMidnight) {
+        dayZeroMidnight = calcDayZeroMidnight(
+          currentSettings.baseDateStr,
+          currentSettings.baseWeeks,
+          currentSettings.baseDays
+        );
+      }
+      // 本日現在の最新の週数・日数を算出して初期選択値にする
+      const progress = calcProgress(dayZeroMidnight, new Date(), currentSettings.targetWeeks);
+      selectSettingsWeeks.value = String(progress.currentWeeks);
+      selectSettingsDays.value = String(progress.currentDays);
+
       const radio = formSettings.querySelector(`input[name="settingsTarget"][value="${currentSettings.targetWeeks}"]`);
       if (radio) radio.checked = true;
     }

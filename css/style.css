@@ -656,6 +656,32 @@ body {
   }
 }
 
+/* アップデート通知トースト（ベッドサイドで刺激にならない極めて控えめなデザイン） */
+.toast-update {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-card);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+  opacity: 0.85;
+  transition: opacity 0.8s var(--ease-soft), transform 0.8s var(--ease-soft);
+  animation: fadeIn 0.4s var(--ease-soft);
+}
+
+.toast-update.fading {
+  opacity: 0;
+  transform: translate(-50%, 6px);
+}
+
 /* 視覚効果低減設定（prefers-reduced-motion）の尊重 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

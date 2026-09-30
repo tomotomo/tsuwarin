@@ -102,8 +102,13 @@ const displayDays = document.getElementById('display-days');
 const celebrationArea = document.getElementById('celebration-area');
 const celebrationMessage = document.getElementById('celebration-message');
 const btnSwitchTo15 = document.getElementById('btn-switch-to-15');
+// アプリケーションバージョン（version.jsonと連動）
+const CURRENT_APP_VERSION = '1.0.1';
+const TOAST_STORAGE_KEY = 'tsuwarin_just_updated';
+
 const encouragementMessage = document.getElementById('encouragement-message');
 const maturityWeeksDisplay = document.getElementById('maturity-weeks-display');
+const toastUpdate = document.getElementById('toast-update');
 
 // アプリケーション状態
 let currentSettings = null;
@@ -111,6 +116,8 @@ let dayZeroMidnight = null;
 let timerId = null;
 let enduranceFadeTimeoutId = null;
 let lastResumeTime = 0;
+let lastVersionCheckTime = 0;
+let isUpdating = false;
 
 /**
  * 前回アクセスからの経過時間（耐えた時間）を計算し、バッジを更新・表示する
@@ -300,6 +307,62 @@ function render() {
 }
 
 /**
+ * アップデート直後のリロード後に控えめなトーストを表示する
+ */
+function showUpdateToastIfJustUpdated() {
+  try {
+    if (sessionStorage.getItem(TOAST_STORAGE_KEY)) {
+      sessionStorage.removeItem(TOAST_STORAGE_KEY);
+      if (!toastUpdate) return;
+      toastUpdate.classList.remove('hidden');
+      toastUpdate.classList.remove('fading');
+
+      // 5秒間穏やかに表示したのち、フェードアウト
+      setTimeout(() => {
+        toastUpdate.classList.add('fading');
+        setTimeout(() => {
+          toastUpdate.classList.add('hidden');
+        }, 800);
+      }, 5000);
+    }
+  } catch (err) {
+    // sessionStorageが無効なプライベートモード等でも静かに無視
+  }
+}
+
+/**
+ * サーバー上の version.json を確認し、新バージョンがあれば自動リロードする
+ */
+async function checkForAppUpdate() {
+  if (isUpdating) return;
+  const now = Date.now();
+  // 前回のチェックから2分以内はスキップ（連続リクエスト抑制）
+  if (now - lastVersionCheckTime < 2 * 60 * 1000) return;
+  lastVersionCheckTime = now;
+
+  try {
+    const res = await fetch(`./version.json?_t=${now}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.version && data.version !== CURRENT_APP_VERSION) {
+      isUpdating = true;
+      // リロード後に「最新バージョンに更新しました」を表示するためのフラグ
+      try {
+        sessionStorage.setItem(TOAST_STORAGE_KEY, 'true');
+      } catch (e) {}
+
+      // キャッシュをバイパスして最新版を自動リロード
+      window.location.reload();
+    }
+  } catch (err) {
+    // オフライン時等は静かに無視
+  }
+}
+
+/**
  * アプリケーションの復帰（Resume）ハンドラ
  * 画面スリープ解除、タブ切り替え、別アプリからの復帰時に正確に同期する
  */
@@ -321,6 +384,9 @@ function handleAppResume() {
 
   // 3. UIの再描画（残り時間、週数など）
   render();
+
+  // 4. 最新バージョンの有無をバックグラウンド確認
+  checkForAppUpdate();
 }
 
 /**
@@ -329,6 +395,9 @@ function handleAppResume() {
 function init() {
   // テーマ初期化
   initTheme();
+
+  // アップデート直後のリロード時、控えめな完了通知を表示
+  showUpdateToastIfJustUpdated();
 
   // セレクトボックスの選択肢初期化
   populateWeeksSelect(selectOnboardingWeeks, 9);
@@ -344,14 +413,18 @@ function init() {
     showState('welcome');
   }
 
-  // 定期タイマー（毎分更新）
+  // 定期タイマー（毎分更新 & 定期的なバージョン確認）
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
     // バックグラウンド非表示時は余計な処理・タイムスタンプ更新を行わない
     if (document.visibilityState === 'hidden') return;
     render();
     updateLastAccess();
+    checkForAppUpdate();
   }, 60000);
+
+  // 起動時の最新バージョン確認
+  checkForAppUpdate();
 
   // 画面復帰・離脱イベント（iOS Safari / Android Chrome 完全対応）
   document.addEventListener('visibilitychange', () => {

@@ -1,5 +1,6 @@
 /**
  * storage.js - LocalStorage 管理および耐えた時間計算モジュール
+ * セッションライフサイクル（離脱時刻と耐えた時間の厳密管理）完全対応
  */
 
 const STORAGE_KEY = 'tsuwarin_settings_v1';
@@ -17,6 +18,10 @@ export function loadSettings() {
     if (!raw) return memoryStorage;
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed.baseWeeks === 'number' && typeof parsed.baseDays === 'number') {
+      // 後方互換マイグレーション: 旧lastAccessTimestampを新lastSessionEndTimestampへ自動引き継ぎ
+      if (!parsed.lastSessionEndTimestamp && parsed.lastAccessTimestamp) {
+        parsed.lastSessionEndTimestamp = parsed.lastAccessTimestamp;
+      }
       return parsed;
     }
   } catch (err) {
@@ -31,13 +36,16 @@ export function loadSettings() {
  * @param {object} settings - 設定オブジェクト
  */
 export function saveSettings(settings) {
+  const sessionEnd = settings.lastSessionEndTimestamp ?? settings.lastAccessTimestamp ?? Date.now();
   const payload = {
     version: 1,
     baseDateStr: settings.baseDateStr,
     baseWeeks: Number(settings.baseWeeks),
     baseDays: Number(settings.baseDays),
     targetWeeks: Number(settings.targetWeeks) || 12,
-    lastAccessTimestamp: settings.lastAccessTimestamp || Date.now(),
+    lastSessionEndTimestamp: sessionEnd,
+    // 旧バージョンとの互換性のためlastAccessTimestampも同期保持
+    lastAccessTimestamp: sessionEnd,
     updatedAt: Date.now()
   };
 
@@ -52,29 +60,35 @@ export function saveSettings(settings) {
 }
 
 /**
- * 最終アクセス時刻を更新する
+ * アプリ離脱時（セッション終了時）または継続利用中の最新時刻を記録する
  * @param {number} [timestamp=Date.now()]
  */
-export function updateLastAccess(timestamp = Date.now()) {
+export function recordSessionEnd(timestamp = Date.now()) {
   const current = loadSettings();
   if (current) {
+    current.lastSessionEndTimestamp = timestamp;
     current.lastAccessTimestamp = timestamp;
     saveSettings(current);
   }
 }
 
 /**
- * 前回アクセスからの経過時間（耐えた時間）を計算し、バッジ表示用データを返す
- * @param {number} lastAccessTimestamp - 前回のアクセスUNIXタイムスタンプ
+ * 互換用エイリアス
+ */
+export const updateLastAccess = recordSessionEnd;
+
+/**
+ * 前回セッション終了からの経過時間（耐えた時間）を計算し、バッジ表示用データを返す
+ * @param {number} lastSessionEndTimestamp - 前回の離脱UNIXタイムスタンプ
  * @param {number} [currentTimestamp=Date.now()] - 現在のUNIXタイムスタンプ
  * @returns {object|null} バッジ表示データ { text, deltaHours }、または非表示の場合 null
  */
-export function getElapsedEndurance(lastAccessTimestamp, currentTimestamp = Date.now()) {
-  if (!lastAccessTimestamp || typeof lastAccessTimestamp !== 'number') {
+export function getElapsedEndurance(lastSessionEndTimestamp, currentTimestamp = Date.now()) {
+  if (!lastSessionEndTimestamp || typeof lastSessionEndTimestamp !== 'number') {
     return null;
   }
 
-  const deltaMs = currentTimestamp - lastAccessTimestamp;
+  const deltaMs = currentTimestamp - lastSessionEndTimestamp;
 
   // 負の値（時計のズレや逆転）または30分（1800秒）未満のリロードや連続操作時はバッジ非表示
   const thirtyMinutesMs = 30 * 60 * 1000;
@@ -121,3 +135,4 @@ export function clearSettings() {
     console.warn('[tsuwarin] LocalStorageクリア失敗:', err);
   }
 }
+

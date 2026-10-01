@@ -4,7 +4,7 @@
  */
 
 import { calcDayZeroMidnight, calcProgress } from './calculator.js';
-import { loadSettings, saveSettings, updateLastAccess, getElapsedEndurance, clearSettings } from './storage.js';
+import { loadSettings, saveSettings, recordSessionEnd, getElapsedEndurance, clearSettings } from './storage.js';
 
 // 時間帯連動の寄り添い・ポジティブメッセージ（夫から奥様へ）
 const TIME_BASED_MESSAGES = {
@@ -103,7 +103,7 @@ const celebrationArea = document.getElementById('celebration-area');
 const celebrationMessage = document.getElementById('celebration-message');
 const btnSwitchTo15 = document.getElementById('btn-switch-to-15');
 // アプリケーションバージョン（version.jsonと連動）
-const CURRENT_APP_VERSION = '1.0.1';
+const CURRENT_APP_VERSION = '1.0.2';
 const TOAST_STORAGE_KEY = 'tsuwarin_just_updated';
 
 const encouragementMessage = document.getElementById('encouragement-message');
@@ -115,29 +115,62 @@ let currentSettings = null;
 let dayZeroMidnight = null;
 let timerId = null;
 let enduranceFadeTimeoutId = null;
-let lastResumeTime = 0;
 let lastVersionCheckTime = 0;
 let isUpdating = false;
 
+// セッション管理状態（Session Lifecycle State: 決定論的セッション管理）
+let currentSession = {
+  active: false,
+  sessionStartTime: 0,
+  enduranceBadgeText: null
+};
+
 /**
- * 前回アクセスからの経過時間（耐えた時間）を計算し、バッジを更新・表示する
+ * セッション開始または復帰判定を行い、耐えた時間を評価する
+ * - 前回のセッション終了（離脱）から30分以上経過している場合、新セッションとして耐えた時間を算出
+ * - 30分未満の短期復帰や同一セッション中のOS/ブラウザイベントでは、既存のバッジ状態を保護・維持
  */
-function checkAndDisplayEnduranceBadge() {
-  if (!currentSettings || !currentSettings.lastAccessTimestamp) {
-    badgeEndurance.classList.add('hidden');
+function evaluateSessionAndEndurance() {
+  if (!currentSettings || !currentSettings.lastSessionEndTimestamp) {
+    currentSession.enduranceBadgeText = null;
+    renderEnduranceBadge();
     return;
   }
 
   const now = Date.now();
-  const lastAccess = currentSettings.lastAccessTimestamp;
-  const endurance = getElapsedEndurance(lastAccess, now);
+  const lastEnd = currentSettings.lastSessionEndTimestamp;
+  const endurance = getElapsedEndurance(lastEnd, now);
 
   if (endurance && endurance.text) {
+    // 30分以上経過: 新しいセッションの開始（前回の離脱からの耐えた時間を確定）
+    currentSession.active = true;
+    currentSession.sessionStartTime = now;
+    currentSession.enduranceBadgeText = endurance.text;
+  } else if (!currentSession.active) {
+    // 初回起動時または30分未満でセッション未開始の場合
+    currentSession.active = true;
+    currentSession.sessionStartTime = now;
+    currentSession.enduranceBadgeText = null;
+  }
+  // ※すでに currentSession.active === true かつ 30分未満の場合は
+  // 同一セッション継続とみなし、既存の currentSession.enduranceBadgeText を不変維持
+
+  renderEnduranceBadge();
+}
+
+/**
+ * 耐えた時間バッジをセッション状態（State）に基づいてレンダリングする
+ * DOM直接操作ではなく、currentSession.enduranceBadgeText に一元従属
+ */
+function renderEnduranceBadge() {
+  if (!badgeEndurance) return;
+
+  if (currentSession.enduranceBadgeText) {
     if (enduranceFadeTimeoutId) {
       clearTimeout(enduranceFadeTimeoutId);
       enduranceFadeTimeoutId = null;
     }
-    badgeEndurance.textContent = endurance.text;
+    badgeEndurance.textContent = currentSession.enduranceBadgeText;
     badgeEndurance.style.opacity = '1';
     badgeEndurance.classList.remove('hidden');
 
@@ -148,10 +181,6 @@ function checkAndDisplayEnduranceBadge() {
   } else {
     badgeEndurance.classList.add('hidden');
   }
-
-  // バッジ計算完了後、今回のセッション開始時刻として記録
-  updateLastAccess(now);
-  currentSettings.lastAccessTimestamp = now;
 }
 
 /**
@@ -367,17 +396,12 @@ async function checkForAppUpdate() {
  * 画面スリープ解除、タブ切り替え、別アプリからの復帰時に正確に同期する
  */
 function handleAppResume() {
-  const now = Date.now();
-  // 複数イベント（pageshow, visibilitychange, focus）の連続発火（1秒以内）をデバウンス
-  if (now - lastResumeTime < 1000) return;
-  lastResumeTime = now;
-
   // 最新の設定を再読み込み
   currentSettings = loadSettings();
   if (!currentSettings) return;
 
-  // 1. 耐えた時間バッジの再計算と更新（前回の離脱からの経過時間）
-  checkAndDisplayEnduranceBadge();
+  // 1. セッション状態の評価（30分以上離脱していれば新セッションとして再計算、未満なら既存状態維持）
+  evaluateSessionAndEndurance();
 
   // 2. 時間帯メッセージのリセット（新しい時間帯への更新）
   currentMessage = '';
@@ -387,6 +411,19 @@ function handleAppResume() {
 
   // 4. 最新バージョンの有無をバックグラウンド確認
   checkForAppUpdate();
+}
+
+/**
+ * アプリケーションの離脱ハンドラ
+ * 画面を閉じた・非表示になった瞬間に正確な離脱時刻（lastSessionEndTimestamp）を保存
+ */
+function handleAppLeave() {
+  const now = Date.now();
+  recordSessionEnd(now);
+  if (currentSettings) {
+    currentSettings.lastSessionEndTimestamp = now;
+    currentSettings.lastAccessTimestamp = now;
+  }
 }
 
 /**
@@ -408,47 +445,50 @@ function init() {
 
   if (currentSettings) {
     render();
-    checkAndDisplayEnduranceBadge();
+    evaluateSessionAndEndurance();
   } else {
     showState('welcome');
   }
 
-  // 定期タイマー（毎分更新 & 定期的なバージョン確認）
+  // 定期タイマー（毎分更新 & 定期的なバージョン確認 & 継続利用生存時刻の記録）
   if (timerId) clearInterval(timerId);
   timerId = setInterval(() => {
     // バックグラウンド非表示時は余計な処理・タイムスタンプ更新を行わない
     if (document.visibilityState === 'hidden') return;
     render();
-    updateLastAccess();
+    recordSessionEnd();
     checkForAppUpdate();
   }, 60000);
 
   // 起動時の最新バージョン確認
   checkForAppUpdate();
 
-  // 画面復帰・離脱イベント（iOS Safari / Android Chrome 完全対応）
+  // 画面復帰・離脱イベント（Page Lifecycle API: iOS Safari / Android Chrome 完全対応）
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       handleAppResume();
     } else if (document.visibilityState === 'hidden') {
-      // 画面を閉じた・非表示になった瞬間に正確な離脱時刻を保存
-      updateLastAccess(Date.now());
+      handleAppLeave();
     }
   });
 
-  // iOS Safari / bfcache 復帰時のイベント
-  window.addEventListener('pageshow', () => {
-    handleAppResume();
+  // iOS Safari / bfcache 復帰時のイベント（persisted true の場合のみ復帰処理）
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+      handleAppResume();
+    }
   });
 
-  // ウィンドウフォーカス復帰時のイベント
+  // ウィンドウフォーカス復帰時のイベント（フォアグラウンド表示時のみ）
   window.addEventListener('focus', () => {
-    handleAppResume();
+    if (document.visibilityState === 'visible') {
+      handleAppResume();
+    }
   });
 
   // ページアンロード・タブ離脱時の正確な離脱時刻保存
   window.addEventListener('pagehide', () => {
-    updateLastAccess(Date.now());
+    handleAppLeave();
   });
 
   setupEventListeners();
@@ -469,16 +509,21 @@ function setupEventListeners() {
     const targetEl = formOnboarding.querySelector('input[name="targetChoice"]:checked');
     const targetWeeks = targetEl ? parseInt(targetEl.value, 10) : 12;
 
+    const now = Date.now();
     currentSettings = saveSettings({
       baseDateStr: getTodayDateStr(),
       baseWeeks: weeks,
       baseDays: days,
       targetWeeks: targetWeeks,
-      lastAccessTimestamp: Date.now()
+      lastSessionEndTimestamp: now
     });
 
+    currentSession.active = true;
+    currentSession.sessionStartTime = now;
+    currentSession.enduranceBadgeText = null;
+    renderEnduranceBadge();
+
     dayZeroMidnight = null;
-    badgeEndurance.classList.add('hidden');
     render();
   });
 
@@ -540,7 +585,7 @@ function setupEventListeners() {
       baseWeeks: weeks,
       baseDays: days,
       targetWeeks: targetWeeks,
-      lastAccessTimestamp: currentSettings ? currentSettings.lastAccessTimestamp : Date.now()
+      lastSessionEndTimestamp: currentSettings ? currentSettings.lastSessionEndTimestamp : Date.now()
     });
 
     dayZeroMidnight = null;
@@ -554,6 +599,10 @@ function setupEventListeners() {
       clearSettings();
       currentSettings = null;
       dayZeroMidnight = null;
+      currentSession.active = false;
+      currentSession.sessionStartTime = 0;
+      currentSession.enduranceBadgeText = null;
+      renderEnduranceBadge();
       closeSettingsModal();
       showState('welcome');
     }

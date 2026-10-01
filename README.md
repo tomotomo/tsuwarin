@@ -75,6 +75,8 @@ tsuwarin/
 │   ├── app.js         # メインコントローラー・DOM操作・テーマ管理
 │   ├── calculator.js  # 時間計算純粋関数（0:00カレンダー基準）
 │   └── storage.js     # LocalStorage永続化・経過時間計算
+├── tests/
+│   └── verify_session_lifecycle.mjs # セッションライフサイクル動作検証テスト
 ├── AGENTS.md          # 普遍的開発規約・環境・検証手順
 ├── PRD.md             # プロダクト要求仕様書
 ├── DESIGN.md          # ビジュアルデザイン・情報設計書
@@ -85,6 +87,7 @@ tsuwarin/
 
 ## 💻 ローカル開発 & 動作検証
 
+### 1. ローカルサーバーの起動
 ビルドツール（Node.js, npm, Vite 等）は不要です。標準の静的Webサーバーですぐに動作確認できます。
 
 ```bash
@@ -93,6 +96,14 @@ python3 -m http.server 8000
 ```
 
 起動後、ブラウザで `http://localhost:8000` にアクセスしてください。
+
+### 2. ライフサイクル自動検証テストの実行
+Android PWA や iOS Safari での復帰時（スプラッシュ画面遅延や多重イベント発火）における「耐えた時間」バッジの表示維持、およびストレージ後方互換を自動検証するテストスクリプトが用意されています。
+
+```bash
+# プロジェクトルートで実行
+node tests/verify_session_lifecycle.mjs
+```
 
 ---
 

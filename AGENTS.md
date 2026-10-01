@@ -41,6 +41,9 @@
 
 ```text
 tsuwarin/
+├── .github/
+│   └── workflows/
+│       └── test.yml   # GitHub Actions CI自動検証ワークフロー
 ├── index.html         # アプリケーション構造・マークアップ
 ├── css/
 │   └── style.css      # スタイル定義・デザインシステム

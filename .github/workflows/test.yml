@@ -1,0 +1,26 @@
+name: Test & Quality Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Lint & Automated Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js のセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: JavaScript 構文チェック (Syntax Check)
+        run: node --check js/app.js js/storage.js js/calculator.js
+
+      - name: セッションライフサイクル自動検証テストの実行
+        run: node tests/verify_session_lifecycle.mjs

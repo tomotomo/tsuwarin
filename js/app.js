@@ -179,6 +179,10 @@ function renderEnduranceBadge() {
       badgeEndurance.style.opacity = '0.75';
     }, 6000);
   } else {
+    if (enduranceFadeTimeoutId) {
+      clearTimeout(enduranceFadeTimeoutId);
+      enduranceFadeTimeoutId = null;
+    }
     badgeEndurance.classList.add('hidden');
   }
 }
